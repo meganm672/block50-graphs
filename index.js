@@ -1,33 +1,3 @@
-// Un directional and un weight graph
-class Graph {
-    constructor() {
-      this.vertices = new Set(); // set of unique vertices
-      this.edges = {}; // adjacency list - map of vertices to their neighbors
-    }
-  
-    //function add vertex
-    addVertex(v) {
-      this.vertices.add(v);
-      this.edges[v] = [];
-    }
-  
-    // function add edge
-    addEdge(v1, v2) {
-      this.edges[v1].push(v2);
-      this.edges[v2].push(v1);
-    }
-  
-    // prints out the structutre of the graph
-    getGraphStructure() {
-      let graphStructure = "";
-      for (const vertex of this.vertices) {
-        const connections = this.edges[vertex].join(" => ");
-        graphStructure += `${vertex} => ${connections}\n`;
-      }
-      console.log(graphStructure);
-    }
-}  
-
 // Question 1
 // You are a network designer entrusted with the responsibility of designing a computer network for a small office. 
 // The office consists of multiple rooms, and your goal is to connect them using the least amount of cable, ensuring that each room is connected to the network. 
@@ -44,7 +14,66 @@ class Graph {
 
 // Sample Output: Minimum cost to connect all rooms: 37
 
-//not sure how to do any of these problems .... they are all incorrect couldnt find suggestions or answers online
+class Edge {
+    constructor(v, weight) {
+        this.v = v;
+        this.weight = weight;
+    }
+}
+
+function prim(graph) {
+    const includedVertices = new Set();
+    const startVertex = 0;
+    includedVertices.add(startVertex);
+
+    const minSpanningTree = [];
+    let totalCost = 0;
+
+    while (includedVertices.size < graph.length) {
+        let minEdge = null;
+
+        for (const vertex of includedVertices) {
+            for (const edge of graph[vertex]) {
+                if (!includedVertices.has(edge.v)) {
+                    if (!minEdge || edge.weight < minEdge.weight) {
+                        minEdge = edge;
+                    }
+                }
+            }
+        }
+   // Check if a valid edge was found
+   if (minEdge === null) {
+    console.error("No valid edge found. The graph might not be connected.");
+    break;
+}
+        includedVertices.add(minEdge.v);
+        minSpanningTree.push(minEdge);
+        totalCost += minEdge.weight;
+    }
+
+    return totalCost;
+}
+
+// Sample Input with Adjacency List
+const adjacencyList = [
+    [new Edge(1, 4), new Edge(7, 8)],
+    [new Edge(0, 4), new Edge(2, 8), new Edge(7, 11)],
+    [new Edge(1, 8), new Edge(3, 7), new Edge(8, 2), new Edge(5, 4)],
+    [new Edge(2, 7), new Edge(4, 9), new Edge(5, 14)],
+    [new Edge(3, 9), new Edge(5, 10)],
+    [new Edge(2, 4), new Edge(3, 14), new Edge(6, 2)],
+    [new Edge(5, 2), new Edge(7, 1), new Edge(8, 6)],
+    [new Edge(0, 8), new Edge(1, 11), new Edge(6, 1), new Edge(8, 7)],
+    [new Edge(2, 2), new Edge(6, 6), new Edge(7, 7)]
+];
+
+// Calculate the minimum cost using Prim's algorithm
+const minCost = prim(adjacencyList);
+
+// Output the result
+console.log("Minimum cost to connect all rooms:", minCost);
+
+
 
 // Question 2
 // You are an aspiring computer scientist tasked with creating a function that can find the shortest path between two locations in a graph. 
@@ -64,33 +93,61 @@ class Graph {
 
 // Sample Output: Shortest path from A to F: [ 'A', 'C', 'F' ]
 
-function bfsShortestPath(graph,source,target){
+function bfsShortestPath(graph, source, target) {
+    // Initialize a queue with the source node and an empty path
+    const queue = [{ node: source, path: [source] }];
+    // Initialize a set to keep track of visited nodes
     const visited = new Set();
-    const queue = [source];
-    visited.add(source);
 
-    while(queue.length >0){
-        const vertex = queue.shift();
+    // Perform BFS
+    while (queue.length > 0) {
+        // Dequeue a node and its path from the front of the queue
+        const { node, path } = queue.shift();
 
-        for (let neighbor of graph[source]){
-            if(!visited.has(neighbor)){
-                queue.push(neighbor);
-                visited.add(neighbor)
+        // If the node is the target, return the path
+        if (node === target) {
+            return path;
+        }
+
+        // If the node has been visited, skip it
+        if (visited.has(node)) {
+            continue;
+        }
+
+        // Mark the node as visited
+        visited.add(node);
+
+        // Enqueue neighboring nodes with their paths
+        for (const neighbor of graph[node]) {
+            if (!visited.has(neighbor)) {
+                const newPath = [...path, neighbor];
+                queue.push({ node: neighbor, path: newPath });
             }
         }
     }
+
+    // If no path is found, return an empty array
+    return [];
 }
 
-const graph={
-    A: ['B', 'C'],   
-    B: ['A', 'D', 'E'],   
-    C: ['A', 'F'],   
-    D: ['B'],   
-    E: ['B', 'F'],   
+// Sample Input
+const graph = {
+    A: ['B', 'C'],
+    B: ['A', 'D', 'E'],
+    C: ['A', 'F'],
+    D: ['B'],
+    E: ['B', 'F'],
     F: ['C', 'E'],
-}
+};
 
-// console.log(bfsShortestPath(graph, graph.A, graph.F))
+const sourceNode = 'A';
+const targetNode = 'F';
+
+// Calculate the shortest path using BFS
+const shortestPath = bfsShortestPath(graph, sourceNode, targetNode);
+
+// Output the result
+console.log(`Shortest path from ${sourceNode} to ${targetNode}:`, shortestPath);
 
 
 // Question 3
@@ -106,20 +163,59 @@ const graph={
 // in the format of Vertices: (neighboring nodes) and source node will be A and Destination node will be F.
 
 // Sample Output: All possible routes from A to F: [ [ 'A', 'B', 'E', 'F' ], [ 'A', 'C', 'F' ] ]
-
-function dfsAllRoutes(graph,source,target){
+function dfsAllRoutes(graph, source, target) {
+    const routes = [];
     const visited = new Set();
-    visited.add(source);
 
-    for(let neighbor of graph[source]){
-        if(!visited.has(neighbor)){
-            dfs(graph,neighbor)
+    function dfsHelper(node, currentRoute) {
+        // Add the current node to the current route
+        currentRoute.push(node);
+        visited.add(node);
+
+        // If the current node is the target, add the current route to the routes array
+        if (node === target) {
+            routes.push([...currentRoute]);
         }
+
+        // Explore neighbors
+        for (const neighbor of graph[node]) {
+            // If the neighbor is not visited, recursively call the DFS helper function
+            if (!visited.has(neighbor)) {
+                dfsHelper(neighbor, currentRoute);
+            }
+        }
+
+        // Backtrack: Remove the last node from the current route and mark it as unvisited
+        currentRoute.pop();
+        visited.delete(node);
     }
+
+    // Call the DFS helper function starting from the source node
+    dfsHelper(source, []);
+
+    // Return the array of all routes
+    return routes;
 }
 
-// console.log(dfsAllRoutes(graph, graph.A,graph.F))
-// 
+// Sample Input
+const DFSgraph = {
+    A: ["B", "C"],
+    B: ["A", "D", "E"],
+    C: ["A", "F"],
+    D: ["B"],
+    E: ["B", "F"],
+    F: ["C", "E"],
+};
+
+const sourceN = 'A';
+const targetN = 'F';
+
+// Calculate all possible routes using DFS
+const allRoutes = dfsAllRoutes(DFSgraph, sourceN, targetN);
+
+// Output the result
+console.log(`All possible routes from ${sourceN} to ${targetN}:`, allRoutes);
+
 
 // Question 4
 // Imagine you are developing a navigation system for a delivery robot that needs to navigate through a city to deliver packages efficiently. 
@@ -150,88 +246,98 @@ function dfsAllRoutes(graph,source,target){
  
 
 // Sample Input:  A: { B: 5, C: 2 },   B: { D: 4, E: 2 },   C: { B: 8, E: 7 },   D: { E: 6, F: 3 },   E: { F: 1 },   F: {}, 
-const startNode = "A"; 
-const endNode = "F";
+// const startNode = "A"; 
+// const endNode = "F";
 
 // Sample Output: Shortest path: A -> B -> E -> F and Distance: 8
-
-// Priority Queue
 class PriorityQueue {
     constructor() {
-      this.values = [];
+        this.queue = [];
     }
-  
-    enqueue(vertex, priority) {
-      this.values.push({ vertex, priority }); // add vertex and priority to values array
-      this.sort(); // sort the values array
+
+    enqueue(element, priority) {
+        this.queue.push({ element, priority });
+        this.sort();
     }
-  
+
     dequeue() {
-      return this.values.shift();
+        return this.queue.shift();
     }
-  
+
+    isNotEmpty() {
+        return this.queue.length > 0;
+    }
+
     sort() {
-      this.values.sort((a, b) => a.priority - b.priority); // sort the values array by priority
+        this.queue.sort((a, b) => a.priority - b.priority);
     }
-  }
+}
+
+function dijkstra(graph, startNode, endNode) {
+    // Initialize distances with Infinity for all nodes except the start node
+    const distances = { [startNode]: 0 };
+    // Initialize priority queue to keep track of the nodes with the shortest distances
+    const priorityQueue = new PriorityQueue();
+    priorityQueue.enqueue(startNode, 0);
+    // Initialize previous nodes to reconstruct the shortest path
+    const previous = {};
+    // Initialize visited set to keep track of visited nodes
+    const visited = new Set();
+
     // Dijkstra's algorithm
-//    function dijkstra(start, end) {
-//       // start and end are the vertices we want the path to start and end at.
-//       const distances = {}; // Keep track of the distances from the start vertex to each vertex
-//       const previous = {}; // Keep track of the previous vertex in the shortest path to each vertex
-//       const priorityQueue = new PriorityQueue(); // Priority queue to keep track of vertices with the shortest distance from the start vertex
-//       const visited = new Set(); // Set to keep track of visited vertices
-  
-//       // initialize distances and previous
-//       for (const vertex in this.adjacencyList) {
-//         // loop through each vertex in the graph
-//         if (vertex === start) {
-//           // if the vertex is the starting vertex
-//           distances[vertex] = 0; // set the distance to 0
-//           priorityQueue.enqueue(vertex, 0); // add the vertex to the priority queue with a distance of 0
-//         } else {
-//           distances[vertex] = Infinity; // set the distance to infinity
-//           priorityQueue.enqueue(vertex, Infinity); // add the vertex to the priority queue with a distance of infinity
-//         }
-//         previous[vertex] = null; // set the previous vertex to null
-//       }
-  
-//       while (priorityQueue.values.length) {
-//         // while the priority queue is not empty
-//         const { vertex } = priorityQueue.dequeue(); // dequeue the vertex with the shortest distance from the start vertex
-//         visited.add(vertex); // add the vertex to the visited set
-  
-//         if (vertex == end) {
-//           // if the vertex is the end vertex
-//           //create path from end to start
-//           const path = [];
-//           let currentVertex = end;
-//           while (currentVertex) {
-//             // loop through the path from end to start
-//             path.unshift(currentVertex); // add the current vertex to the path
-//             currentVertex = previous[currentVertex]; // set the current vertex to the previous vertex in the path
-//           }
-//           return { distance: distances[end], path }; // return the distance and path
-//         }
-  
-//         if (distances[vertex] !== Infinity) {
-//           // if the distance is not infinity
-//           for (let neighbor of this.adjacencyList[vertex]) {
-//             // loop through each neighbor of the vertex
-//             if (!visited.has(neighbor.city)) {
-//               // if the neighbor has not been visited
-//               const distance = distances[vertex] + neighbor.weight; // calculate the distance to the neighbor
-//               if (distance < distances[neighbor.city]) {
-//                 // if the distance to the neighbor is less than the current distance
-//                 distances[neighbor.city] = distance; // update the distance to the neighbor
-//                 previous[neighbor.city] = vertex; // update the previous vertex city
-//                 priorityQueue.enqueue(neighbor.city, distance); // add the neighbor to the priority queue
-//               }
-//             }
-//           }
-//         }
-//       }
-//       return { distance: -1, path: [] }; // return an empty object if no path is found
-//     }
-  
-//   console.log(dijkstra(startNode,endNode))
+    while (priorityQueue.isNotEmpty()) {
+        // Dequeue the node with the shortest distance
+        const { element: currentNode, priority: currentDistance } = priorityQueue.dequeue();
+
+        // Skip if the node has already been visited
+        if (visited.has(currentNode)) {
+            continue;
+        }
+
+        // Mark the node as visited
+        visited.add(currentNode);
+
+        // Explore neighbors
+        for (const neighbor in graph[currentNode]) {
+            // Calculate the potential distance from the start node to the neighbor
+            const potentialDistance = currentDistance + graph[currentNode][neighbor];
+
+            // Update the distance and enqueue the neighbor if it's shorter
+            if (potentialDistance < (distances[neighbor] || Infinity)) {
+                distances[neighbor] = potentialDistance;
+                previous[neighbor] = currentNode;
+                priorityQueue.enqueue(neighbor, potentialDistance);
+            }
+        }
+    }
+
+    // Reconstruct the shortest path
+    const shortestPath = [];
+    let currentNode = endNode;
+    while (currentNode !== undefined) {
+        shortestPath.unshift(currentNode);
+        currentNode = previous[currentNode];
+    }
+
+    // Return the result
+    return { path: shortestPath, distance: distances[endNode] };
+}
+
+// Sample Input
+const Dgraph = {
+    A: { B: 5, C: 2 },
+    B: { D: 4, E: 2 },
+    C: { B: 8, E: 7 },
+    D: { E: 6, F: 3 },
+    E: { F: 1 },
+    F: {},
+};
+
+const startNode = "A";
+const endNode = "F";
+
+// Calculate the shortest path using Dijkstra's algorithm
+const result = dijkstra(Dgraph, startNode, endNode);
+
+// Output the result
+console.log(`Shortest path: ${result.path.join(" -> ")} and Distance: ${result.distance}`);
